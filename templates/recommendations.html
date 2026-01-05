@@ -1,0 +1,67 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title>音乐推荐</title>
+    <style>
+        body { font-family: Arial; padding: 20px; max-width: 1200px; margin: 0 auto; }
+        .header { background: #4CAF50; color: white; padding: 20px; border-radius: 10px; margin-bottom: 20px; }
+        .nav { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; }
+        .nav-btn { padding: 10px 20px; background: #e0e0e0; border: none; border-radius: 5px; cursor: pointer; text-decoration: none; color: #333; }
+        .nav-btn:hover { background: #d0d0d0; }
+        .nav-btn.active { background: #4CAF50; color: white; }
+        .song-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px; }
+        .song-card { border: 1px solid #ddd; padding: 15px; border-radius: 5px; }
+        .song-card h3 { margin-top: 0; color: #333; }
+        .no-data { text-align: center; padding: 40px; color: #666; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🎵 音乐推荐系统</h1>
+        <p>个性化推荐您喜欢的音乐</p>
+    </div>
+    
+    <div class="nav">
+        <a href="/recommendations?type=hybrid" class="nav-btn {% if rec_type == 'hybrid' %}active{% endif %}">混合推荐</a>
+        <a href="/recommendations?type=popular" class="nav-btn {% if rec_type == 'popular' %}active{% endif %}">热度推荐</a>
+        <a href="/recommendations?type=new" class="nav-btn {% if rec_type == 'new' %}active{% endif %}">新歌推荐</a>
+        <a href="/recommendations?type=high_rated" class="nav-btn {% if rec_type == 'high_rated' %}active{% endif %}">好评推荐</a>
+        <a href="/recommendations?type=collaborative" class="nav-btn {% if rec_type == 'collaborative' %}active{% endif %}">协同过滤</a>
+        <a href="/recommendations?type=content" class="nav-btn {% if rec_type == 'content' %}active{% endif %}">内容推荐</a>
+    </div>
+    
+    <h2>
+        {% if rec_type == 'hybrid' %}混合推荐
+        {% elif rec_type == 'popular' %}热度推荐
+        {% elif rec_type == 'new' %}新歌推荐
+        {% elif rec_type == 'high_rated' %}好评推荐
+        {% elif rec_type == 'collaborative' %}协同过滤推荐
+        {% elif rec_type == 'content' %}内容推荐
+        {% endif %}
+        ({{ rec_count }} 首)
+    </h2>
+    
+    {% if recommendations %}
+        <div class="song-grid">
+            {% for song in recommendations %}
+            <div class="song-card">
+                <h3>{{ song.title }}</h3>
+                <p><strong>艺术家:</strong> {{ song.artist }}</p>
+                <p><strong>专辑:</strong> {{ song.album or "未知" }}</p>
+                <p><strong>流派:</strong> {{ song.genre or "未知" }}</p>
+                <p><strong>播放次数:</strong> {{ song.play_count }}</p>
+                <p><strong>评分:</strong> {{ "%.1f"|format(song.avg_rating) if song.avg_rating else "暂无" }}</p>
+                <a href="/play/{{ song.id }}">播放</a>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="no-data">
+            <h3>暂无推荐</h3>
+            <p>未能生成推荐，请尝试其他推荐类型</p>
+        </div>
+    {% endif %}
+    
+    <p style="margin-top: 30px;"><a href="/">返回首页</a></p>
+</body>
+</html>

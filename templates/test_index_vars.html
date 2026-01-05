@@ -1,0 +1,68 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title>首页模板变量测试</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .test-section { margin: 20px 0; padding: 20px; border: 1px solid #ddd; }
+        .variable { margin: 10px 0; padding: 10px; background: #f5f5f5; }
+        .found { color: green; }
+        .missing { color: red; }
+    </style>
+</head>
+<body>
+    <h1>首页模板变量测试</h1>
+    
+    <div class="test-section">
+        <h2>1. 检查system_stats变量</h2>
+        <div class="variable">
+            system_stats is defined: {{ system_stats is defined }}
+            {% if system_stats is defined %}<span class="found">✅</span>{% else %}<span class="missing">❌</span>{% endif %}
+        </div>
+        
+        {% if system_stats is defined %}
+        <div class="variable">
+            system_stats.total_songs: {{ system_stats.total_songs }}
+            {% if system_stats.total_songs %}<span class="found">✅</span>{% else %}<span class="missing">❌</span>{% endif %}
+        </div>
+        <div class="variable">
+            system_stats.total_users: {{ system_stats.total_users }}
+            {% if system_stats.total_users %}<span class="found">✅</span>{% else %}<span class="missing">❌</span>{% endif %}
+        </div>
+        <div class="variable">
+            system_stats.total_plays: {{ system_stats.total_plays }}
+            {% if system_stats.total_plays %}<span class="found">✅</span>{% else %}<span class="missing">❌</span>{% endif %}
+        </div>
+        <div class="variable">
+            system_stats.total_ratings: {{ system_stats.total_ratings }}
+            {% if system_stats.total_ratings %}<span class="found">✅</span>{% else %}<span class="missing">❌</span>{% endif %}
+        </div>
+        {% endif %}
+    </div>
+    
+    <div class="test-section">
+        <h2>2. 检查首页使用的变量名</h2>
+        <p>如果上面显示system_stats有数据但首页显示0，说明首页使用了不同的变量名</p>
+        
+        <div class="variable">
+            total_songs: {{ total_songs }}
+            {% if total_songs is defined %}<span class="found">✅ 定义</span>{% else %}<span class="missing">❌ 未定义</span>{% endif %}
+        </div>
+        
+        <div class="variable">
+            stats.total_songs: {{ stats.total_songs if stats is defined else 'stats未定义' }}
+            {% if stats is defined %}<span class="found">✅ 定义</span>{% else %}<span class="missing">❌ 未定义</span>{% endif %}
+        </div>
+    </div>
+    
+    <div class="test-section">
+        <h2>3. 解决方案</h2>
+        <p>如果首页使用的是不同的变量名，需要：</p>
+        <ol>
+            <li>修改首页模板，使用 system_stats.xxx</li>
+            <li>或者修改上下文处理器，注入不同的变量名</li>
+        </ol>
+        <p><a href="/">返回首页查看效果</a></p>
+    </div>
+</body>
+</html>

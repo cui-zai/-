@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>排行榜 - 音乐推荐系统</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .chart-item {
+            border-left: 4px solid #667eea;
+            margin-bottom: 0.5rem;
+            padding: 0.75rem 1rem;
+            background: white;
+            border-radius: 0 8px 8px 0;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .chart-item:hover {
+            background-color: #f8f9fa;
+            transform: translateX(5px);
+        }
+        .rank-1 { border-left-color: #ffd700; }
+        .rank-2 { border-left-color: #c0c0c0; }
+        .rank-3 { border-left-color: #cd7f32; }
+        .rank-badge {
+            width: 32px;
+            height: 32px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            font-weight: bold;
+            margin-right: 12px;
+            font-size: 0.9rem;
+        }
+        .rank-1 .rank-badge { 
+            background: linear-gradient(135deg, #ffd700, #ffaa00); 
+            color: white; 
+            box-shadow: 0 2px 5px rgba(255, 215, 0, 0.3);
+        }
+        .rank-2 .rank-badge { 
+            background: linear-gradient(135deg, #c0c0c0, #a0a0a0); 
+            color: white;
+            box-shadow: 0 2px 5px rgba(192, 192, 192, 0.3);
+        }
+        .rank-3 .rank-badge { 
+            background: linear-gradient(135deg, #cd7f32, #b56c28); 
+            color: white;
+            box-shadow: 0 2px 5px rgba(205, 127, 50, 0.3);
+        }
+        .rank-4-plus .rank-badge { 
+            background: linear-gradient(135deg, #667eea, #764ba2); 
+            color: white;
+            box-shadow: 0 2px 5px rgba(102, 126, 234, 0.3);
+        }
+        .chart-section {
+            margin-bottom: 2.5rem;
+        }
+        .song-info {
+            min-width: 0; /* 防止文本溢出 */
+        }
+        .song-title {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 0.25rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .song-details {
+            color: #666;
+            font-size: 0.85rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+    </style>
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="fas fa-music me-2"></i>音乐推荐
+            </a>
+            <div class="navbar-nav">
+                <a class="nav-link" href="/">首页</a>
+                <a class="nav-link" href="/recommendations">推荐</a>
+                <a class="nav-link" href="/explore">探索</a>
+                <a class="nav-link active" href="/charts">排行榜</a>
+            </div>
+        </div>
+    </nav>
+    
+    <div class="container mt-4 mb-5">
+        <!-- 页面标题 -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <h1 class="display-6 fw-bold">
+                    <i class="fas fa-trophy text-warning me-2"></i>音乐排行榜
+                </h1>
+                <p class="text-muted">实时更新的各类音乐榜单</p>
+            </div>
+        </div>
+        
+        <!-- 热门排行榜 -->
+        <div class="chart-section">
+            <div class="card shadow-sm">
+                <div class="card-header bg-gradient bg-danger text-white d-flex justify-content-between align-items-center">
+                    <div>
+                        <h4 class="mb-0">
+                            <i class="fas fa-fire me-2"></i>热门排行榜
+                        </h4>
+                        <small class="opacity-75">基于播放次数排序</small>
+                    </div>
+                    <span class="badge bg-light text-danger">
+                        <i class="fas fa-sync-alt me-1"></i>实时更新
+                    </span>
+                </div>
+                <div class="card-body">
+                    {% for song in hot_songs %}
+                    <div class="chart-item rank-{{ '1' if loop.index == 1 else '2' if loop.index == 2 else '3' if loop.index == 3 else '4-plus' }}" 
+                         data-song-id="{{ song.id }}">
+                        <div class="d-flex align-items-center">
+                            <span class="rank-badge">{{ loop.index }}</span>
+                            <div class="song-info flex-grow-1">
+                                <div class="song-title">{{ song.title }}</div>
+                                <div class="song-details">
+                                    {{ song.artist }}
+                                    {% if song.genre %}
+                                    <span class="text-muted">| {{ song.genre }}</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="text-end">
+                                <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25">
+                                    <i class="fas fa-play me-1"></i>{{ song.play_count|default(0)|int }}
+                                </span>
+                                {% if song.avg_rating %}
+                                <span class="badge bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25 ms-2">
+                                    <i class="fas fa-star me-1"></i>{{ "%.1f"|format(song.avg_rating) }}
+                                </span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-music fa-3x text-muted mb-3"></i>
+                        <p class="text-muted">暂无热门歌曲数据</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- 新歌榜 -->
+        <div class="chart-section">
+            <div class="card shadow-sm">
+                <div class="card-header bg-gradient bg-primary text-white d-flex justify-content-between align-items-center">
+                    <div>
+                        <h4 class="mb-0">
+                            <i class="fas fa-clock me-2"></i>新歌榜
+                        </h4>
+                        <small class="opacity-75">最新发布的歌曲</small>
+                    </div>
+                    <span class="badge bg-light text-primary">
+                        <i class="fas fa-calendar me-1"></i>按发布时间
+                    </span>
+                </div>
+                <div class="card-body">
+                    {% for song in new_songs %}
+                    <div class="chart-item" data-song-id="{{ song.id }}">
+                        <div class="d-flex align-items-center">
+                            <span class="rank-badge">{{ loop.index }}</span>
+                            <div class="song-info flex-grow-1">
+                                <div class="song-title">{{ song.title }}</div>
+                                <div class="song-details">
+                                    {{ song.artist }}
+                                    {% if song.genre %}
+                                    <span class="text-muted">| {{ song.genre }}</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="text-end">
+                                <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25">
+                                    {% if song.release_year %}
+                                    <i class="fas fa-calendar me-1"></i>{{ song.release_year }}
+                                    {% else %}
+                                    <i class="fas fa-calendar me-1"></i>未知
+                                    {% endif %}
+                                </span>
+                                <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25 ms-2">
+                                    <i class="fas fa-play me-1"></i>{{ song.play_count|default(0)|int }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-plus-circle fa-3x text-muted mb-3"></i>
+                        <p class="text-muted">暂无新歌数据</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- 评分榜 -->
+        <div class="chart-section">
+            <div class="card shadow-sm">
+                <div class="card-header bg-gradient bg-success text-white d-flex justify-content-between align-items-center">
+                    <div>
+                        <h4 class="mb-0">
+                            <i class="fas fa-star me-2"></i>评分榜
+                        </h4>
+                        <small class="opacity-75">用户评分最高的歌曲</small>
+                    </div>
+                    <span class="badge bg-light text-success">
+                        <i class="fas fa-thumbs-up me-1"></i>按评分排序
+                    </span>
+                </div>
+                <div class="card-body">
+                    {% for item in high_rated_songs %}
+                    {% set song = item[0] if item is sequence and item|length > 0 else item %}
+                    {% set rating = item[1] if item is sequence and item|length > 1 else song.avg_rating %}
+                    <div class="chart-item" data-song-id="{{ song.id }}">
+                        <div class="d-flex align-items-center">
+                            <span class="rank-badge">{{ loop.index }}</span>
+                            <div class="song-info flex-grow-1">
+                                <div class="song-title">{{ song.title }}</div>
+                                <div class="song-details">
+                                    {{ song.artist }}
+                                    {% if song.genre %}
+                                    <span class="text-muted">| {{ song.genre }}</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="text-end">
+                                <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25">
+                                    <i class="fas fa-star me-1"></i>{{ "%.1f"|format(rating) if rating else '--' }}
+                                </span>
+                                <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25 ms-2">
+                                    <i class="fas fa-play me-1"></i>{{ song.play_count|default(0)|int }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-star fa-3x text-muted mb-3"></i>
+                        <p class="text-muted">暂无评分数据</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 播放提示 -->
+    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+        <div id="playToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-header bg-success text-white">
+                <i class="fas fa-play-circle me-2"></i>
+                <strong class="me-auto">正在播放</strong>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast"></button>
+            </div>
+            <div class="toast-body">
+                播放记录已保存！
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // 页面加载完成后执行
+        document.addEventListener('DOMContentLoaded', function() {
+            // 为所有歌曲卡片添加点击事件
+            const chartItems = document.querySelectorAll('.chart-item');
+            
+            chartItems.forEach(item => {
+                // 添加悬停效果
+                item.addEventListener('mouseenter', function() {
+                    this.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)';
+                });
+                
+                item.addEventListener('mouseleave', function() {
+                    this.style.boxShadow = 'none';
+                });
+                
+                // 添加点击事件
+                item.addEventListener('click', function() {
+                    const songId = this.getAttribute('data-song-id');
+                    if (songId) {
+                        playSong(songId);
+                    }
+                });
+            });
+            
+            // 初始化Bootstrap Toast组件
+            const playToast = document.getElementById('playToast');
+            let toastInstance = null;
+            if (playToast) {
+                toastInstance = new bootstrap.Toast(playToast);
+            }
+        });
+        
+        // 播放歌曲函数
+        function playSong(songId) {
+            console.log(`播放歌曲 ID: ${songId}`);
+            
+            // 发送播放请求
+            fetch(`/play/${songId}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.status === 'success') {
+                        // 显示播放提示
+                        const toastElement = document.getElementById('playToast');
+                        if (toastElement) {
+                            const toast = new bootstrap.Toast(toastElement);
+                            toast.show();
+                        } else {
+                            alert('播放记录已保存！');
+                        }
+                        
+                        // 可以在这里添加实际的播放逻辑
+                        console.log(`成功播放歌曲 ID: ${songId}`);
+                    } else {
+                        console.warn('播放失败:', data.message);
+                        alert('播放失败: ' + (data.message || '未知错误'));
+                    }
+                })
+                .catch(error => {
+                    console.error('播放请求失败:', error);
+                    alert('播放失败，请检查网络连接或稍后重试');
+                });
+        }
+    </script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

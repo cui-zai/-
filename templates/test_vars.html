@@ -1,0 +1,42 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title>测试变量传递</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .test { margin: 20px 0; padding: 20px; border: 1px solid #ccc; }
+        .success { color: green; }
+        .error { color: red; }
+    </style>
+</head>
+<body>
+    <h1>变量传递测试</h1>
+    
+    <div class="test">
+        <h2>system_stats 变量测试:</h2>
+        <p>system_stats exists: {{ system_stats is defined }}</p>
+        <p>system_stats type: {{ system_stats.__class__.__name__ if system_stats is defined else 'undefined' }}</p>
+        
+        {% if system_stats is defined %}
+            <p class="success">✅ system_stats 变量已定义</p>
+            <ul>
+                <li>system_stats.total_songs: {{ system_stats.total_songs }}</li>
+                <li>system_stats.total_users: {{ system_stats.total_users }}</li>
+                <li>system_stats.total_plays: {{ system_stats.total_plays }}</li>
+                <li>system_stats.total_ratings: {{ system_stats.total_ratings }}</li>
+            </ul>
+        {% else %}
+            <p class="error">❌ system_stats 变量未定义</p>
+        {% endif %}
+    </div>
+    
+    <div class="test">
+        <h2>其他可能变量:</h2>
+        <p>stats exists: {{ stats is defined }}</p>
+        <p>total_songs exists: {{ total_songs is defined }}</p>
+        <p>current_user exists: {{ current_user is defined }}</p>
+    </div>
+    
+    <p><a href="/">返回首页</a></p>
+</body>
+</html>

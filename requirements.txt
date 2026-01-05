@@ -1,0 +1,18 @@
+﻿# Web框架
+Flask==2.3.2
+Flask-SQLAlchemy==3.0.5
+Flask-Login==0.6.2
+Flask-CORS==4.0.0
+Flask-WTF==1.1.1
+
+# 数据库
+mysql-connector-python==8.1.0
+
+# 数据处理
+numpy==1.23.5
+pandas==1.5.3
+scikit-learn==1.2.2
+
+# 其他工具
+requests==2.31.0
+python-dotenv==1.0.0

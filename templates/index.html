@@ -1,0 +1,547 @@
+﻿<!-- templates/index.html -->
+{% extends "base.html" %}
+
+{% block title %}首页 - 音乐推荐系统{% endblock %}
+
+{% block content %}
+<!-- 英雄区域 -->
+<div class="hero-section mt-4">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8 text-center">
+                <h1 class="display-4 fw-bold mb-4">发现属于你的音乐世界</h1>
+                <p class="lead mb-4">基于先进的人工智能算法，为你推荐最合适的音乐</p>
+                <div class="d-flex flex-wrap justify-content-center gap-3">
+                    {% if current_user.is_authenticated %}
+                    <a href="{{ url_for('recommendations') }}" class="btn btn-primary btn-lg px-4 py-2">
+                        <i class="fas fa-star me-2"></i>查看个性化推荐
+                    </a>
+                    {% else %}
+                    <a href="{{ url_for('login') }}" class="btn btn-primary btn-lg px-4 py-2">
+                        <i class="fas fa-sign-in-alt me-2"></i>登录开始推荐
+                    </a>
+                    {% endif %}
+                    <a href="{{ url_for('explore') }}" class="btn btn-outline-primary btn-lg px-4 py-2">
+                        <i class="fas fa-compass me-2"></i>探索音乐
+                    </a>
+                    <a href="{{ url_for('charts') }}" class="btn btn-outline-secondary btn-lg px-4 py-2">
+                        <i class="fas fa-chart-line me-2"></i>排行榜
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 系统统计信息 -->
+<div class="container my-5">
+    <h3 class="mb-4 text-center">
+        <i class="fas fa-chart-bar me-2"></i>系统概览
+    </h3>
+    
+    <div class="row mb-5">
+        <!-- 动态统计信息 - 会通过API更新 -->
+        <div class="col-md-3 col-6 mb-3">
+            <div class="card stats-card h-100">
+                <div class="card-body text-center">
+                    <div class="stats-icon mb-3">
+                        <i class="fas fa-music fa-2x"></i>
+                    </div>
+                    <h3 class="stats-number" id="songs-count">加载中...</h3>
+                    <p class="text-muted mb-0">歌曲总数</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3 col-6 mb-3">
+            <div class="card stats-card h-100">
+                <div class="card-body text-center">
+                    <div class="stats-icon mb-3">
+                        <i class="fas fa-users fa-2x"></i>
+                    </div>
+                    <h3 class="stats-number" id="users-count">加载中...</h3>
+                    <p class="text-muted mb-0">注册用户</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3 col-6 mb-3">
+            <div class="card stats-card h-100">
+                <div class="card-body text-center">
+                    <div class="stats-icon mb-3">
+                        <i class="fas fa-play-circle fa-2x"></i>
+                    </div>
+                    <h3 class="stats-number" id="plays-count">加载中...</h3>
+                    <p class="text-muted mb-0">总播放量</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3 col-6 mb-3">
+            <div class="card stats-card h-100">
+                <div class="card-body text-center">
+                    <div class="stats-icon mb-3">
+                        <i class="fas fa-star fa-2x"></i>
+                    </div>
+                    <h3 class="stats-number" id="ratings-count">加载中...</h3>
+                    <p class="text-muted mb-0">评分总数</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 热门内容展示 -->
+<div class="container my-5">
+    <h3 class="mb-4">
+        <i class="fas fa-fire me-2"></i>热门推荐
+    </h3>
+    
+    <!-- 热门歌曲 -->
+    <div class="row mb-5">
+        <div class="col-12 mb-3">
+            <h5><i class="fas fa-music me-2"></i>热门歌曲</h5>
+        </div>
+        {% if hot_songs %}
+            {% for song in hot_songs[:6] %}
+            <div class="col-md-4 col-lg-2 mb-3">
+                <div class="card song-card h-100">
+                    <div class="card-body">
+                        <h6 class="card-title text-truncate">{{ song.title }}</h6>
+                        <p class="card-text small text-muted mb-2">{{ song.artist }}</p>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="badge bg-primary">{{ song.play_count }} 播放</span>
+                            {% if song.avg_rating %}
+                            <span class="badge bg-warning">{{ "%.1f"|format(song.avg_rating) }} ★</span>
+                            {% endif %}
+                        </div>
+                        <div class="mt-3">
+                            <a href="{{ url_for('play_song', song_id=song.id) }}" 
+                               class="btn btn-sm btn-outline-primary w-100">
+                                <i class="fas fa-play me-1"></i>播放
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="col-12 text-center py-4">
+                <i class="fas fa-music text-muted fa-3x mb-3"></i>
+                <p class="text-muted">暂无热门歌曲数据</p>
+            </div>
+        {% endif %}
+    </div>
+    
+    <!-- 最新歌曲 -->
+    <div class="row mb-5">
+        <div class="col-12 mb-3">
+            <h5><i class="fas fa-clock me-2"></i>最新歌曲</h5>
+        </div>
+        {% if new_songs %}
+            {% for song in new_songs[:6] %}
+            <div class="col-md-4 col-lg-2 mb-3">
+                <div class="card song-card h-100">
+                    <div class="card-body">
+                        <h6 class="card-title text-truncate">{{ song.title }}</h6>
+                        <p class="card-text small text-muted mb-2">{{ song.artist }}</p>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="badge bg-info">新歌</span>
+                            {% if song.release_year %}
+                            <span class="small text-muted">{{ song.release_year }}</span>
+                            {% endif %}
+                        </div>
+                        <div class="mt-3">
+                            <a href="{{ url_for('play_song', song_id=song.id) }}" 
+                               class="btn btn-sm btn-outline-primary w-100">
+                                <i class="fas fa-play me-1"></i>播放
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="col-12 text-center py-4">
+                <i class="fas fa-clock text-muted fa-3x mb-3"></i>
+                <p class="text-muted">暂无最新歌曲数据</p>
+            </div>
+        {% endif %}
+    </div>
+    
+    <!-- 高评分歌曲 -->
+    <div class="row mb-5">
+        <div class="col-12 mb-3">
+            <h5><i class="fas fa-star me-2"></i>高评分歌曲</h5>
+        </div>
+        {% if high_rated_songs %}
+            {% for song in high_rated_songs[:6] %}
+            <div class="col-md-4 col-lg-2 mb-3">
+                <div class="card song-card h-100">
+                    <div class="card-body">
+                        <h6 class="card-title text-truncate">{{ song.title }}</h6>
+                        <p class="card-text small text-muted mb-2">{{ song.artist }}</p>
+                        <div class="d-flex justify-content-between align-items-center">
+                            {% if song.avg_rating %}
+                            <span class="badge bg-warning">{{ "%.1f"|format(song.avg_rating) }} ★</span>
+                            {% else %}
+                            <span class="badge bg-secondary">暂无评分</span>
+                            {% endif %}
+                        </div>
+                        <div class="mt-3">
+                            <a href="{{ url_for('play_song', song_id=song.id) }}" 
+                               class="btn btn-sm btn-outline-primary w-100">
+                                <i class="fas fa-play me-1"></i>播放
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="col-12 text-center py-4">
+                <i class="fas fa-star text-muted fa-3x mb-3"></i>
+                <p class="text-muted">暂无高评分歌曲数据</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- 推荐类型选择 -->
+<div class="container my-5">
+    <h3 class="mb-4">
+        <i class="fas fa-robot me-2"></i>智能推荐
+    </h3>
+    
+    <div class="row">
+        <div class="col-md-3 mb-3">
+            <a href="{{ url_for('popular_recommendations') }}" class="card recommendation-card h-100 text-decoration-none">
+                <div class="card-body text-center">
+                    <div class="recommendation-icon mb-3">
+                        <i class="fas fa-fire fa-3x"></i>
+                    </div>
+                    <h5 class="card-title">热门推荐</h5>
+                    <p class="card-text small text-muted">基于整体播放热度的推荐</p>
+                </div>
+            </a>
+        </div>
+        
+        {% if current_user.is_authenticated %}
+        <div class="col-md-3 mb-3">
+            <a href="{{ url_for('recommendations') }}?type=collaborative" class="card recommendation-card h-100 text-decoration-none">
+                <div class="card-body text-center">
+                    <div class="recommendation-icon mb-3">
+                        <i class="fas fa-users fa-3x"></i>
+                    </div>
+                    <h5 class="card-title">协同过滤</h5>
+                    <p class="card-text small text-muted">基于相似用户行为的推荐</p>
+                </div>
+            </a>
+        </div>
+        
+        <div class="col-md-3 mb-3">
+            <a href="{{ url_for('recommendations') }}?type=content" class="card recommendation-card h-100 text-decoration-none">
+                <div class="card-body text-center">
+                    <div class="recommendation-icon mb-3">
+                        <i class="fas fa-tags fa-3x"></i>
+                    </div>
+                    <h5 class="card-title">内容推荐</h5>
+                    <p class="card-text small text-muted">基于歌曲特征相似度的推荐</p>
+                </div>
+            </a>
+        </div>
+        
+        <div class="col-md-3 mb-3">
+            <a href="{{ url_for('recommendations') }}?type=hybrid" class="card recommendation-card h-100 text-decoration-none">
+                <div class="card-body text-center">
+                    <div class="recommendation-icon mb-3">
+                        <i class="fas fa-brain fa-3x"></i>
+                    </div>
+                    <h5 class="card-title">混合推荐</h5>
+                    <p class="card-text small text-muted">综合多种算法的智能推荐</p>
+                </div>
+            </a>
+        </div>
+        {% else %}
+        <div class="col-md-9">
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle me-2"></i>
+                登录后可以体验个性化推荐功能，包括协同过滤、内容推荐和混合推荐。
+                <a href="{{ url_for('login') }}" class="alert-link">立即登录</a>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block styles %}
+<style>
+    /* 英雄区域 */
+    .hero-section {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 5rem 0;
+        border-radius: 15px;
+        margin-bottom: 2rem;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    }
+    
+    /* 统计卡片 */
+    .stats-card {
+        border: none;
+        border-radius: 15px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        transition: all 0.3s ease;
+        background: white;
+    }
+    
+    .stats-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 30px rgba(0,0,0,0.15);
+    }
+    
+    .stats-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto;
+    }
+    
+    .stats-icon i {
+        color: white;
+    }
+    
+    .stats-number {
+        font-size: 2rem;
+        font-weight: bold;
+        color: #333;
+        margin: 0.5rem 0;
+    }
+    
+    /* 歌曲卡片 */
+    .song-card {
+        border: none;
+        border-radius: 10px;
+        box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+        transition: all 0.3s ease;
+        height: 100%;
+    }
+    
+    .song-card:hover {
+        box-shadow: 0 5px 20px rgba(0,0,0,0.12);
+        transform: translateY(-2px);
+    }
+    
+    /* 推荐卡片 */
+    .recommendation-card {
+        border: none;
+        border-radius: 15px;
+        background: linear-gradient(135deg, #f5f7fa 0%, #e4edf5 100%);
+        transition: all 0.3s ease;
+    }
+    
+    .recommendation-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+    
+    .recommendation-card:hover .card-title,
+    .recommendation-card:hover .card-text {
+        color: white !important;
+    }
+    
+    .recommendation-icon {
+        transition: all 0.3s ease;
+    }
+    
+    .recommendation-card:hover .recommendation-icon i {
+        color: white !important;
+    }
+    
+    /* 响应式调整 */
+    @media (max-width: 768px) {
+        .hero-section {
+            padding: 3rem 1rem;
+        }
+        
+        .hero-section h1 {
+            font-size: 2rem;
+        }
+        
+        .stats-number {
+            font-size: 1.5rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // 页面加载完成后执行
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('🎵 首页加载完成');
+        
+        // 加载统计数据
+        loadStats();
+        
+        // 为所有播放按钮添加事件监听
+        setupPlayButtons();
+    });
+    
+    // 加载统计数据
+    async function loadStats() {
+        try {
+            console.log('📊 正在加载统计数据...');
+            
+            const response = await fetch('/api/stats');
+            if (!response.ok) {
+                throw new Error('HTTP错误: ' + response.status);
+            }
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                // 使用动画效果更新统计数据
+                animateStat('songs-count', data.data.songs_count);
+                animateStat('users-count', data.data.users_count);
+                animateStat('plays-count', data.data.plays_count);
+                animateStat('ratings-count', data.data.ratings_count);
+                
+                console.log('✅ 统计数据加载成功');
+                
+                // 显示成功提示
+                showToast('统计数据已更新', 'success');
+            } else {
+                console.error('❌ API返回错误:', data.error);
+                showToast('加载统计数据失败', 'error');
+            }
+        } catch (error) {
+            console.error('❌ 加载统计数据失败:', error);
+            
+            // 显示默认值
+            const defaultStats = {
+                'songs-count': 100,
+                'users-count': 10,
+                'plays-count': 0,
+                'ratings-count': 0
+            };
+            
+            for (const [id, value] of Object.entries(defaultStats)) {
+                const element = document.getElementById(id);
+                if (element) {
+                    element.textContent = value;
+                }
+            }
+            
+            showToast('使用默认统计数据', 'warning');
+        }
+    }
+    
+    // 动画效果更新统计数字
+    function animateStat(elementId, finalValue) {
+        const element = document.getElementById(elementId);
+        if (!element) return;
+        
+        const currentText = element.textContent.replace(/[^0-9.]/g, '');
+        const currentValue = parseFloat(currentText) || 0;
+        const duration = 1500;
+        const fps = 60;
+        const frameDuration = 1000 / fps;
+        const totalFrames = Math.round(duration / frameDuration);
+        const increment = (finalValue - currentValue) / totalFrames;
+        
+        let frame = 0;
+        let current = currentValue;
+        
+        const timer = setInterval(function() {
+            frame++;
+            current += increment;
+            
+            if (frame >= totalFrames) {
+                element.textContent = finalValue.toLocaleString();
+                clearInterval(timer);
+            } else {
+                element.textContent = Math.round(current).toLocaleString();
+            }
+        }, frameDuration);
+    }
+    
+    // 设置播放按钮事件
+    function setupPlayButtons() {
+        // 注意：现在按钮直接使用链接，所以不需要特殊处理
+        // 如果未来需要AJAX播放，可以在这里添加
+    }
+    
+    // 播放歌曲
+    async function playSong(songId) {
+        try {
+            const response = await fetch('/play/' + songId);
+            
+            if (response.redirected) {
+                window.location.href = response.url;
+            } else {
+                // 如果是未登录用户，提示登录
+                const isAuthenticated = document.body.getAttribute('data-user-authenticated') === 'true';
+                if (!isAuthenticated) {
+                    showToast('请先登录以记录播放历史', 'info');
+                    window.location.href = "/login";
+                }
+            }
+        } catch (error) {
+            console.error('播放歌曲失败:', error);
+            showToast('播放失败，请重试', 'error');
+        }
+    }
+    
+    // 显示提示消息
+    function showToast(message, type) {
+        // 创建toast元素
+        const toast = document.createElement('div');
+        toast.className = 'toast align-items-center text-bg-' + type + ' border-0 position-fixed top-0 end-0 m-3';
+        toast.style.zIndex = '9999';
+        
+        let icon = 'info-circle';
+        if (type === 'success') icon = 'check-circle';
+        else if (type === 'error') icon = 'exclamation-triangle';
+        else if (type === 'warning') icon = 'exclamation-circle';
+        
+        toast.innerHTML = `
+            <div class="d-flex">
+                <div class="toast-body">
+                    <i class="fas fa-${icon} me-2"></i>
+                    ${message}
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+            </div>
+        `;
+        
+        document.body.appendChild(toast);
+        
+        // 使用Bootstrap的Toast
+        if (typeof bootstrap !== 'undefined' && bootstrap.Toast) {
+            const bsToast = new bootstrap.Toast(toast, {
+                autohide: true,
+                delay: 3000
+            });
+            bsToast.show();
+            
+            // 自动移除toast
+            toast.addEventListener('hidden.bs.toast', function() {
+                toast.remove();
+            });
+        } else {
+            // 如果没有Bootstrap，简单显示后移除
+            setTimeout(function() {
+                toast.remove();
+            }, 3000);
+        }
+    }
+</script>
+{% endblock %}

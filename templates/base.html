@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}音乐推荐系统{% endblock %}</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.bootcdn.net/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- 自定义CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    
+    <!-- 页面特定CSS -->
+    {% block styles %}{% endblock %}
+    
+    <!-- CSRF Token -->
+    <meta name="csrf-token" content="{{ csrf_token() if csrf_token else '' }}">
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow">
+        <div class="container">
+            <a class="navbar-brand" href="{{ url_for('index') }}">
+                <i class="fas fa-music me-2"></i>音乐推荐系统
+            </a>
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link {{ 'active' if request.endpoint == 'index' }}" href="{{ url_for('index') }}">
+                            <i class="fas fa-home me-1"></i>首页
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('recommendations') }}">
+                            <i class="fas fa-star me-1"></i>推荐
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('explore') }}">
+                            <i class="fas fa-compass me-1"></i>发现
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('charts') }}">
+                            <i class="fas fa-chart-line me-1"></i>排行榜
+                        </a>
+                    </li>
+                    {% if current_user.is_authenticated and current_user.is_admin %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('admin.index') }}">
+                            <i class="fas fa-cog me-1"></i>管理
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+                
+                <!-- 搜索框 -->
+                <form class="d-flex me-3" action="{{ url_for('search') }}" method="get">
+                    <div class="input-group">
+                        <input type="text" class="form-control" placeholder="搜索歌曲或艺术家..." 
+                               name="q" id="search-input" value="{{ request.args.get('q', '') }}">
+                        <button class="btn btn-outline-light" type="submit">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                </form>
+                
+                <!-- 用户菜单 -->
+                <ul class="navbar-nav">
+                    {% if current_user.is_authenticated %}
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-user me-1"></i>{{ current_user.username }}
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li>
+                                <a class="dropdown-item" href="{{ url_for('profile') }}">
+                                    <i class="fas fa-user-circle me-2"></i>个人资料
+                                </a>
+                            </li>
+                            <!-- 暂时注释掉不存在的路由 -->
+                            <!-- 
+                            <li>
+                                <a class="dropdown-item" href="#">
+                                    <i class="fas fa-history me-2"></i>播放历史
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="#">
+                                    <i class="fas fa-heart me-2"></i>我的收藏
+                                </a>
+                            </li>
+                            -->
+                            <li><hr class="dropdown-divider"></li>
+                            <!--
+                            <li>
+                                <a class="dropdown-item" href="#">
+                                    <i class="fas fa-cog me-2"></i>设置
+                                </a>
+                            </li>
+                            -->
+                            <li>
+                                <a class="dropdown-item text-danger" href="{{ url_for('logout') }}">
+                                    <i class="fas fa-sign-out-alt me-2"></i>退出登录
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                    {% else %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('login') }}">
+                            <i class="fas fa-sign-in-alt me-1"></i>登录
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('register') }}">
+                            <i class="fas fa-user-plus me-1"></i>注册
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 内容区域 -->
+    <div class="container mt-4">
+        <!-- 面包屑导航 -->
+        {% block breadcrumb %}
+        {% if breadcrumb %}
+        <nav aria-label="breadcrumb" class="mb-3">
+            <ol class="breadcrumb">
+                {% for item in breadcrumb %}
+                <li class="breadcrumb-item {% if loop.last %}active{% endif %}">
+                    {% if item.url and not loop.last %}
+                    <a href="{{ item.url }}">{{ item.text }}</a>
+                    {% else %}
+                    {{ item.text }}
+                    {% endif %}
+                </li>
+                {% endfor %}
+            </ol>
+        </nav>
+        {% endif %}
+        {% endblock %}
+
+        <!-- 消息提示 -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <!-- 主要内容 -->
+        <main>
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+
+    <!-- 页脚 -->
+    <footer class="mt-5">
+        <div class="container py-4">
+            <div class="row">
+                <div class="col-md-4">
+                    <h5 class="mb-3">音乐推荐系统</h5>
+                    <p>基于人工智能的个性化音乐推荐平台，为你发现好音乐。</p>
+                    <div class="social-links">
+                        <a href="#" class="text-white me-3"><i class="fab fa-github"></i></a>
+                        <a href="#" class="text-white me-3"><i class="fab fa-weibo"></i></a>
+                        <a href="#" class="text-white"><i class="fab fa-weixin"></i></a>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <h6>推荐</h6>
+                    <ul class="list-unstyled">
+                        <li><a href="{{ url_for('recommendations') }}" class="text-white-50">为你推荐</a></li>
+                        <li><a href="{{ url_for('charts') }}" class="text-white-50">热门排行</a></li>
+                        <li><a href="{{ url_for('explore') }}" class="text-white-50">发现音乐</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-2">
+                    <h6>关于</h6>
+                    <ul class="list-unstyled">
+                        <li><a href="#" class="text-white-50">关于我们</a></li>
+                        <li><a href="#" class="text-white-50">帮助中心</a></li>
+                        <li><a href="#" class="text-white-50">服务条款</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-4">
+                    <h6>联系我们</h6>
+                    <p class="text-white-50">
+                        <i class="fas fa-envelope me-2"></i>3098795851@qq.com<br>
+                        <i class="fas fa-phone me-2"></i>19858622726
+                    </p>
+                </div>
+            </div>
+            <hr class="bg-white-50">
+            <div class="row">
+                <div class="col-md-6">
+                    <p class="mb-0">© 2024 音乐推荐系统. 保留所有权利.</p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <p class="mb-0">
+                        <a href="#" class="text-white-50 me-3">隐私政策</a>
+                        <a href="#" class="text-white-50">使用条款</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap 5 JavaScript -->
+    <script src="https://cdn.bootcdn.net/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- 自定义JavaScript -->
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    
+    <!-- 页面特定JavaScript -->
+    {% block scripts %}{% endblock %}
+    
+    <!-- 初始化播放器 -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 初始化播放器
+            if (typeof MusicPlayer !== 'undefined' && !window.player) {
+                window.player = new MusicPlayer();
+            }
+            
+            // 显示系统状态
+            console.log('🎵 音乐推荐系统已加载');
+            console.log('📱 当前用户: {% if current_user.is_authenticated %}{{ current_user.username }}{% else %}未登录{% endif %}');
+        });
+    </script>
+</body>
+</html>

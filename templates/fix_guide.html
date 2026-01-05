@@ -1,0 +1,66 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title>首页修复指南</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; line-height: 1.6; }
+        .step { margin: 20px 0; padding: 15px; border-left: 4px solid #667eea; background: #f8f9fa; }
+        .code { background: #2d2d2d; color: #f8f8f2; padding: 10px; border-radius: 5px; font-family: 'Courier New', monospace; }
+        .warning { background: #fff3cd; border-left: 4px solid #ffc107; padding: 10px; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <h1>首页模板修复指南</h1>
+    
+    <div class="step">
+        <h2>问题描述</h2>
+        <p>首页统计数据显示为0，但实际数据库中有数据（100首歌曲、11个用户等）。</p>
+        <p>这是因为模板中使用了硬编码的0，而不是动态变量。</p>
+    </div>
+    
+    <div class="step">
+        <h2>修复步骤</h2>
+        <ol>
+            <li>打开文件：<code>templates/index.html</code></li>
+            <li>搜索：<code>歌曲总数</code></li>
+            <li>找到类似这样的代码：
+                <pre class="code">
+&lt;div class="col-md-3 col-6 mb-3"&gt;
+    &lt;div class="stat-card"&gt;
+        &lt;h3 class="stat-number"&gt;0&lt;/h3&gt;  &lt;!-- 这里显示0 --&gt;
+        &lt;div class="text-muted"&gt;歌曲总数&lt;/div&gt;
+    &lt;/div&gt;
+&lt;/div&gt;</pre>
+            </li>
+            <li>将 <code>&lt;h3 class="stat-number"&gt;0&lt;/h3&gt;</code> 替换为：
+                <pre class="code">&lt;h3 class="stat-number"&gt;{{ system_stats.total_songs or 0 }}&lt;/h3&gt;</pre>
+            </li>
+            <li>对其他统计项做同样替换：
+                <ul>
+                    <li>注册用户 → <code>{{ system_stats.total_users or 0 }}</code></li>
+                    <li>总播放量 → <code>{{ system_stats.total_plays or 0 }}</code></li>
+                    <li>评分总数 → <code>{{ system_stats.total_ratings or 0 }}</code></li>
+                </ul>
+            </li>
+        </ol>
+    </div>
+    
+    <div class="step">
+        <h2>验证修复</h2>
+        <p>修复后，访问 <a href="http://127.0.0.1:5000/">首页</a> 应该显示：</p>
+        <ul>
+            <li>歌曲总数：100</li>
+            <li>注册用户：11</li>
+            <li>总播放量：1240</li>
+            <li>评分总数：192</li>
+        </ul>
+    </div>
+    
+    <div class="warning">
+        <strong>注意：</strong>如果页面排版乱了，说明我们添加的新统计部分与模板冲突。
+        请删除我们添加的额外统计部分，只修复原有的统计卡片。
+    </div>
+    
+    <p><a href="/">返回首页</a></p>
+</body>
+</html>
