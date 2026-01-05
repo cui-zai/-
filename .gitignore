@@ -34,3 +34,4 @@ generate_*.py
 update_*.py 
 get_high_rated_songs 
 final_verification.py 
+fix_indentation.ps1 
